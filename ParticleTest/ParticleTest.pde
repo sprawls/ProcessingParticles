@@ -26,7 +26,6 @@ void loadBackgroundImage(String filepath){
   image.resize(width,height);
 }
 void loadFont(){
-  printArray(PFont.list());
   font = createFont("font_0.ttf", 24);
   textFont(font);
   textAlign(CENTER, CENTER); 
@@ -104,7 +103,7 @@ void keyPressed() {
     manager.RestartLevel();
   } else if(keyCode == BACKSPACE) {
     if(manager.currentText.length() > 0) manager.currentText = manager.currentText.substring(0,  manager.currentText.length() - 1); 
-  } else {
+  } else if (keyCode != SHIFT && keyCode != CONTROL && keyCode != ALT) {
     manager.currentText += key;
   }
 }
@@ -125,29 +124,31 @@ class GameManager {
   
   void update(){
     if(!systems.isEmpty()){
-      fill(255);
-      textSize(60);
-      text(currentText, width/2, height/2);
+      fill(200);
+      textSize(150);
+      text(currentText, width/2, height/2+35);
     }
   }
   
   void CheckLevelCompletion(){
+    println(currentText);
     currentText = currentText.toLowerCase();
+    println(currentText);
     switch(currentLevel) {
       case(1) : 
-        if(currentText.equals("triangle")) LoadLevel(currentLevel+1);
+        if(currentText.equals("triangle") || currentText.equals("triangles")) LoadLevel(currentLevel+1);
         else currentText = "";
         break;
       case(2) : 
-        if(currentText.equals("circle")) LoadLevel(currentLevel+1);
+        if(currentText.equals("circle") || currentText.equals("circles") || currentText.equals("round") || currentText.equals("rounds") || currentText.equals("cercle") || currentText.equals("cercles")) LoadLevel(currentLevel+1);
         else currentText = "";
         break;
       case(3) : 
-        if(currentText.equals("square")) LoadLevel(currentLevel+1);
+        if(currentText.equals("star") || currentText.equals("stars") || currentText.equals("etoile") || currentText.equals("etoiles") || currentText.equals("étoile") || currentText.equals("étoiles")) LoadLevel(currentLevel+1);
         else currentText = "";
         break;
       case(4) : 
-        if(currentText.equals("star")) LoadLevel(currentLevel+1);
+        if(currentText.equals("heart") || currentText.equals("hearts") || currentText.equals("coeur") || currentText.equals("coeurs") || currentText.equals("<3")) LoadLevel(currentLevel+1);
         else currentText = "";
         break;
       default : 
@@ -191,15 +192,20 @@ class ParticleSystem {
   color psColor;
   float psSize;
   float psLifespan;
-  
+  float reticuleSizeMin = 5;
+  float reticuleSizeMax = 20;
+  float reticuleSizeRate = 15;
+  float reticuleRotationRate = PI/80;
   //Variable
   float lastSpawnMillis = 0;
+  float curReticuleSize = 4;
+  boolean reticuleShrinking = false;
+  float curReticuleRotation = 0;
 
   ParticleSystem(int num, PVector v, PVector o) {
     particles = new ArrayList<Particle>();   // Initialize the arraylist
     origin = v.get();                        // Store the origin point
     orientation = o.get();
-    psColor = color(20 + random(235),20 + random(235),20 + random(235));
     psSize = 15 + random(3);
     psLifespan = 3.5;
     for (int i = 0; i < num; i++) {
@@ -219,6 +225,25 @@ class ParticleSystem {
         particles.remove(i);
       }
     }
+    //Reticule to show particle system position
+    if(reticuleShrinking) {
+      curReticuleSize -= reticuleSizeRate * deltaTime;
+      if(curReticuleSize < reticuleSizeMin) reticuleShrinking = false;
+    } else {
+      curReticuleSize += reticuleSizeRate * deltaTime;
+      if(curReticuleSize > reticuleSizeMax) reticuleShrinking = true;
+    }
+    curReticuleRotation += reticuleRotationRate;
+    //println(curReticuleSize);
+    stroke(255,255,255,150);
+    fill(0,0,0,0);
+    pushMatrix();
+    
+    translate(origin.x,origin.y);
+    rotate(curReticuleRotation);
+    rect(0 - (curReticuleSize/2),0 - (curReticuleSize/2),curReticuleSize,curReticuleSize);
+    popMatrix();
+    
   }
 
   void CheckParticleSpawn(){
@@ -229,7 +254,7 @@ class ParticleSystem {
   }
 
   void addParticle() {
-    Particle p = new Particle(origin, getModifiedOrientation(dissipation), psColor, psSize, psLifespan);
+    Particle p = new Particle(origin, getModifiedOrientation(dissipation), psSize, psLifespan);
     particles.add(p);
   }
 
@@ -276,13 +301,12 @@ class Particle {
       lifespan = startLifespan; 
       updateAcceleration();
   }  
-  Particle(PVector l, PVector v, color sC, float sS, float sL) {
+  Particle(PVector l, PVector v, float sS, float sL) {
     velocity = v.get();
     location = l.get();
     updateAcceleration();
     startLifespan = sL;
-    lifespan = startLifespan; 
-    startColor = sC;
+    lifespan = startLifespan;
     startSize = sS;
   }
 
