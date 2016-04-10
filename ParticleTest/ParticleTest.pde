@@ -188,7 +188,7 @@ class ParticleSystem {
   PVector origin;                   // An origin point for where particles are birthed
   PVector orientation;              // Orientation in which particles are fired
   float dissipation = 0.2;          // Force of the dissipation of the particle. Small value mean particles are concentrated in a direction. Big value mean it is more spread.
-  float spawnRate = 0.125;           // Spawn a particle every SpawnRate Seconds
+  float spawnRate = 0.135;           // Spawn a particle every SpawnRate Seconds
   color psColor;
   float psSize;
   float psLifespan;
@@ -206,7 +206,7 @@ class ParticleSystem {
     particles = new ArrayList<Particle>();   // Initialize the arraylist
     origin = v.get();                        // Store the origin point
     orientation = o.get();
-    psSize = 15 + random(3);
+    psSize = 25 + random(3);
     psLifespan = 3.5;
     for (int i = 0; i < num; i++) {
       addParticle();    // Add "num" amount of particles to the arraylist
@@ -285,9 +285,9 @@ class Particle {
   PVector acceleration;
   color startColor =  color(255,255,255,255);  //Color at max lifespan
   color endColor =  color(0,0,0,50);//Color on when lifespan is 0
-  float startLifespan = 3;      //Maximum particle lifespan in seconds
-  float startSize = 20;
-  float endSize = 2;
+  float startLifespan = 2.8;      //Maximum particle lifespan in seconds
+  float startSize = 30;
+  float endSize = 5;
   
   //Variables 
   float lifespan;    //current lifespan left in seconds
