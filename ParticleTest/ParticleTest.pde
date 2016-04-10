@@ -1,5 +1,7 @@
 ArrayList<ParticleSystem> systems;
+GameManager manager;
 PImage image;
+PFont font;
 
 //Inputs
 boolean mouseHeldLeft = false;
@@ -13,37 +15,71 @@ float curMillis = 0;
 void setup() {
   size(640, 360);
   systems = new ArrayList<ParticleSystem>();
+  manager = new GameManager();
   curMillis = millis();
-  loadImage();
+  loadBackgroundImage("level_1.png");
+  loadFont();
 }
 
-void loadImage(){
-  image = loadImage("level_3.png"); 
+void loadBackgroundImage(String filepath){
+  image = loadImage(filepath); 
   image.resize(width,height);
+}
+void loadFont(){
+  printArray(PFont.list());
+  font = createFont("font_0.ttf", 24);
+  textFont(font);
+  textAlign(CENTER, CENTER); 
 }
 
 void draw() {
-  UpdateTime(); // Update Time
+  updateTime(); // Update Time
   image(image, 0, 0); // Load image
   background(0); // Clear screen
 
+  //Update Particles
   for (ParticleSystem ps: systems) {
     ps.run();
   }
-  if (systems.isEmpty()) {
-    fill(255);
-    textAlign(CENTER);
-    text("click mouse to add particle systems", width/2, height/2);
-  }
+  //Update Manager
+  manager.update();
+  //Show help text on screen
+  showScreenText();
+
+}
+
+void showScreenText(){
+    if (systems.isEmpty()) {
+      fill(255);
+      textAlign(CENTER);
+      if(manager.currentLevel == 1) {
+        textSize(48);
+        text("Type The Shape", width/2, height/4 + 25);
+        textSize(24);
+        text("Click left mouse to add particle systems", width/2, height/2 + 50);
+        text("Hold mouse buttons to alter particles", width/2, height/2 + 75);
+      } else if(manager.currentLevel > manager.levels) {
+        textSize(48);
+        text("", width/2, height/4 + 25); //End game text
+      } else {
+        textSize(48);
+        text("Shape " + manager.currentLevel, width/2, height/4 + 25);
+      }
+    } else if(manager.currentText == "") {
+      fill(255);
+      textSize(18);
+      text("Type the shape. Press enter to submit. Press delete to restart.", width/2, height - 20);
+    }
 }
 
 // Update all variables linked to time
-void UpdateTime(){
+void updateTime(){
   deltaTime =  (millis() - curMillis) / 1000;
   totalTime += deltaTime;
   curMillis = millis();
 }
 
+// Check inputs
 void mousePressed() {
   if(mouseButton == LEFT) {
       systems.add(new ParticleSystem(1, new PVector(mouseX, mouseY), (new PVector((width/2)-mouseX,(height/2)-mouseY)).normalize()));
@@ -51,7 +87,6 @@ void mousePressed() {
   } else {
        mouseHeldRight = true;
   }
-
 }
 
 void mouseReleased(){
@@ -62,7 +97,86 @@ void mouseReleased(){
     }
 }
 
+void keyPressed() {
+  if (keyCode == ENTER) {
+    manager.CheckLevelCompletion();
+  } else if(keyCode == DELETE) {
+    manager.RestartLevel();
+  } else if(keyCode == BACKSPACE) {
+    if(manager.currentText.length() > 0) manager.currentText = manager.currentText.substring(0,  manager.currentText.length() - 1); 
+  } else {
+    manager.currentText += key;
+  }
+}
 
+class GameManager {
+  //Properties
+  int levels = 4;
+  
+  //Variables
+  String currentText = "";
+  int currentLevel = 1;
+  
+  //Constructor
+  GameManager(){
+     currentLevel = 1;
+     currentText = "";
+  }
+  
+  void update(){
+    if(!systems.isEmpty()){
+      fill(255);
+      textSize(60);
+      text(currentText, width/2, height/2);
+    }
+  }
+  
+  void CheckLevelCompletion(){
+    currentText = currentText.toLowerCase();
+    switch(currentLevel) {
+      case(1) : 
+        if(currentText.equals("triangle")) LoadLevel(currentLevel+1);
+        else currentText = "";
+        break;
+      case(2) : 
+        if(currentText.equals("circle")) LoadLevel(currentLevel+1);
+        else currentText = "";
+        break;
+      case(3) : 
+        if(currentText.equals("square")) LoadLevel(currentLevel+1);
+        else currentText = "";
+        break;
+      case(4) : 
+        if(currentText.equals("star")) LoadLevel(currentLevel+1);
+        else currentText = "";
+        break;
+      default : 
+        currentText = "";
+        break;
+    }
+  }
+  
+  void LoadLevel(int lvl){
+    currentLevel = lvl;
+    
+    String newImagePath;
+    if(currentLevel <= levels) {
+      newImagePath = "level_" + currentLevel + ".png";
+    } else {
+      newImagePath = "level_end.png";
+    }
+    loadBackgroundImage(newImagePath);
+    //Clear particls nad text
+    RestartLevel();
+  }
+  
+  //Clear particle and test on screen
+  void RestartLevel() {
+    systems = new ArrayList<ParticleSystem>();
+    currentText = "";
+  }
+  
+}
 
 // An ArrayList is used to manage the list of Particles
 
