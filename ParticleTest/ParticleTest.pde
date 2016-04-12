@@ -17,7 +17,7 @@ void setup() {
   systems = new ArrayList<ParticleSystem>();
   manager = new GameManager();
   curMillis = millis();
-  loadBackgroundImage("level_1.png");
+  manager.LoadLevel(manager.currentLevel);
   loadFont();
 }
 
@@ -81,7 +81,7 @@ void updateTime(){
 // Check inputs
 void mousePressed() {
   if(mouseButton == LEFT) {
-      systems.add(new ParticleSystem(1, new PVector(mouseX, mouseY), (new PVector((width/2)-mouseX,(height/2)-mouseY)).normalize()));
+      manager.spawnParticleSystem();
       mouseHeldLeft = true;
   } else {
        mouseHeldRight = true;
@@ -111,6 +111,7 @@ void keyPressed() {
 class GameManager {
   //Properties
   int levels = 4;
+  int maxParticleSystems = 8;
   
   //Variables
   String currentText = "";
@@ -122,6 +123,7 @@ class GameManager {
      currentText = "";
   }
   
+  //tick
   void update(){
     if(!systems.isEmpty()){
       fill(200);
@@ -130,6 +132,15 @@ class GameManager {
     }
   }
   
+  //Spawns a particle system and delete oldest one if limit is reached
+  void spawnParticleSystem(){
+    systems.add(new ParticleSystem(1, new PVector(mouseX, mouseY), (new PVector((width/2)-mouseX,(height/2)-mouseY)).normalize()));
+    while(systems.size() > maxParticleSystems) {
+      systems.remove(0);
+    }
+  }
+  
+  //Check if the given input is correct. If so, go to next level.
   void CheckLevelCompletion(){
     println(currentText);
     currentText = currentText.toLowerCase();
@@ -157,12 +168,14 @@ class GameManager {
     }
   }
   
+  //Load given level
   void LoadLevel(int lvl){
     currentLevel = lvl;
     
     String newImagePath;
     if(currentLevel <= levels) {
       newImagePath = "level_" + currentLevel + ".png";
+      //newImagePath = "level_6.png"; // Debug to test new levels
     } else {
       newImagePath = "level_end.png";
     }
@@ -180,7 +193,6 @@ class GameManager {
 }
 
 // An ArrayList is used to manage the list of Particles
-
 class ParticleSystem {
 
   //Properties
@@ -188,7 +200,7 @@ class ParticleSystem {
   PVector origin;                   // An origin point for where particles are birthed
   PVector orientation;              // Orientation in which particles are fired
   float dissipation = 0.2;          // Force of the dissipation of the particle. Small value mean particles are concentrated in a direction. Big value mean it is more spread.
-  float spawnRate = 0.135;           // Spawn a particle every SpawnRate Seconds
+  float spawnRate = 0.145;           // Spawn a particle every SpawnRate Seconds
   color psColor;
   float psSize;
   float psLifespan;
@@ -207,14 +219,14 @@ class ParticleSystem {
     origin = v.get();                        // Store the origin point
     orientation = o.get();
     psSize = 25 + random(3);
-    psLifespan = 3.5;
+    psLifespan = 4.5;
     for (int i = 0; i < num; i++) {
       addParticle();    // Add "num" amount of particles to the arraylist
     }
     lastSpawnMillis = millis()/1000;
   }
 
-
+  //tick
   void run() {
     CheckParticleSpawn();
     // Cycle through the ArrayList backwards, because we are deleting while iterating
@@ -246,6 +258,7 @@ class ParticleSystem {
     
   }
 
+  //check state of the partile system. Check for spawn of a new particle.
   void CheckParticleSpawn(){
     while(lastSpawnMillis+spawnRate < totalTime) {
       addParticle();
@@ -253,15 +266,18 @@ class ParticleSystem {
     }
   }
 
+  //Add a default particle
   void addParticle() {
     Particle p = new Particle(origin, getModifiedOrientation(dissipation), psSize, psLifespan);
     particles.add(p);
   }
 
+  //Add given particle
   void addParticle(Particle p) {
     particles.add(p);
   }
   
+  //randomize angle of orientation by factor at random
   PVector getModifiedOrientation(float factor){
     PVector modOri = orientation.normalize();
     modOri = new PVector( modOri.x * (1 + random(-factor,factor)), 
@@ -277,14 +293,13 @@ class ParticleSystem {
 
 
 // A simple Particle class
-
 class Particle {
   //Properties
   PVector location;
   PVector velocity;
   PVector acceleration;
   color startColor =  color(255,255,255,255);  //Color at max lifespan
-  color endColor =  color(0,0,0,50);//Color on when lifespan is 0
+  color endColor =  color(0,0,0,100);//Color on when lifespan is 0
   float startLifespan = 2.8;      //Maximum particle lifespan in seconds
   float startSize = 30;
   float endSize = 5;
@@ -294,13 +309,14 @@ class Particle {
   color curColor;    //current color based on lifespan
   float curSize;
 
-  //Particle Constructors
+  //Default constructor
   Particle(PVector l, PVector v) {
       velocity = v.get();
       location = l.get();
       lifespan = startLifespan; 
       updateAcceleration();
   }  
+  //Customized constructor with size and lifespan
   Particle(PVector l, PVector v, float sS, float sL) {
     velocity = v.get();
     location = l.get();
@@ -310,12 +326,16 @@ class Particle {
     startSize = sS;
   }
 
+  //tick
   void run() {
     updateAcceleration();
-    update();
+    updateLocation();
+    calculateProperties();
+    lifespan -= deltaTime;
     display();
   }
   
+  //Handle particle acceleration and apply mouse inputs influence
   void updateAcceleration(){
     acceleration = (new PVector(mouseX - location.x,mouseY - location.y)).normalize();
     if(mouseHeldLeft) acceleration.mult(0.05);
@@ -324,11 +344,9 @@ class Particle {
   }
 
   // Method to update location
-  void update() {
+  void updateLocation() {
     velocity.add(acceleration);
     move();
-    calculateProperties();
-    lifespan -= deltaTime;
   }
   
   // Method that moves the particle and handle screen edges collisions
