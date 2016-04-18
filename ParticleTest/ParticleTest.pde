@@ -6,6 +6,9 @@ PFont font;
 //Inputs
 boolean mouseHeldLeft = false;
 boolean mouseHeldRight = false;
+float mouseHeldLeftTime = 0;
+float mouseHeldRightTime = 0;
+float timeForMouseClick = 0.4;
 
 //Time
 float totalTime = 0;
@@ -33,6 +36,7 @@ void loadFont(){
 
 void draw() {
   updateTime(); // Update Time
+  updateInputs(); //Update Inputs time
   image(image, 0, 0); // Load image
   background(0); // Clear screen
 
@@ -54,15 +58,18 @@ void showScreenText(){
       if(manager.currentLevel == 1) {
         textSize(48);
         text("Type The Shape", width/2, height/4 + 25);
-        textSize(24);
-        text("Click left mouse to add particle systems", width/2, height/2 + 50);
-        text("Hold mouse buttons to alter particles", width/2, height/2 + 75);
       } else if(manager.currentLevel > manager.levels) {
         textSize(48);
-        text("", width/2, height/4 + 25); //End game text
+        text("The end", width/2, height/4 + 25); //End game text
       } else {
         textSize(48);
         text("Shape " + manager.currentLevel, width/2, height/4 + 25);
+      }
+      if(manager.currentLevel <= manager.levels) {
+        textSize(24);
+        text("Click left mouse to add particle systems", width/2, height/2 + 60);
+        text("Hold left mouse button to attract", width/2, height/2 + 85); 
+        text("Hold right mouse button to repulse", width/2, height/2 + 110); 
       }
     } else if(manager.currentText == "") {
       fill(255);
@@ -78,22 +85,30 @@ void updateTime(){
   curMillis = millis();
 }
 
+// Update inputs with delta time
+void updateInputs(){
+  if(mouseHeldLeft) mouseHeldLeftTime += deltaTime;
+  if(mouseHeldRight) mouseHeldRightTime += deltaTime;
+}
+
 // Check inputs
 void mousePressed() {
   if(mouseButton == LEFT) {
-      manager.spawnParticleSystem();
-      mouseHeldLeft = true;
+    mouseHeldLeft = true;
+    mouseHeldLeftTime = 0;
   } else {
-       mouseHeldRight = true;
+    mouseHeldRight = true;
+    mouseHeldRightTime = 0;
   }
 }
 
 void mouseReleased(){
-    if(mouseButton == LEFT) {
-      mouseHeldLeft = false;
-    } else {
-      mouseHeldRight = false;
-    }
+  if(mouseButton == LEFT) {
+    if(mouseHeldLeftTime < timeForMouseClick) manager.spawnParticleSystem(); //Spawn particle system if mouse was clicked but not held
+    mouseHeldLeft = false;
+  } else {
+    mouseHeldRight = false;
+  }
 }
 
 void keyPressed() {
@@ -104,7 +119,7 @@ void keyPressed() {
   } else if(keyCode == BACKSPACE) {
     if(manager.currentText.length() > 0) manager.currentText = manager.currentText.substring(0,  manager.currentText.length() - 1); 
   } else if (keyCode != SHIFT && keyCode != CONTROL && keyCode != ALT) {
-    manager.currentText += key;
+    if(!systems.isEmpty()) manager.currentText += key;
   }
 }
 
@@ -219,7 +234,7 @@ class ParticleSystem {
     origin = v.get();                        // Store the origin point
     orientation = o.get();
     psSize = 25 + random(3);
-    psLifespan = 4.5;
+    psLifespan = 5.5;
     for (int i = 0; i < num; i++) {
       addParticle();    // Add "num" amount of particles to the arraylist
     }
@@ -385,9 +400,11 @@ class Particle {
 
   // Method to display
   void display() {
-    stroke(curColor);
-    fill(curColor);
-    ellipse(location.x,location.y,curSize,curSize);
+    if(!(startColor == color(0,0,0))) { //Only draw if inside shape (not black)
+      stroke(curColor);
+      fill(curColor);
+      ellipse(location.x,location.y,curSize,curSize);
+    } 
   }
 
   // Is the particle still useful?
