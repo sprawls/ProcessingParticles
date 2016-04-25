@@ -125,7 +125,7 @@ void keyPressed() {
 
 class GameManager {
   //Properties
-  int levels = 4;
+  int levels = 7;
   int maxParticleSystems = 8;
   
   //Variables
@@ -177,6 +177,19 @@ class GameManager {
         if(currentText.equals("heart") || currentText.equals("hearts") || currentText.equals("coeur") || currentText.equals("coeurs") || currentText.equals("<3")) LoadLevel(currentLevel+1);
         else currentText = "";
         break;
+      case(5) : 
+        if(currentText.equals("sun") || currentText.equals("suns") || currentText.equals("soleil") || currentText.equals("soleils")) LoadLevel(currentLevel+1);
+        else currentText = "";
+        break;
+      case(6) : 
+        if(currentText.equals("drop") || currentText.equals("drops") || currentText.equals("water") || currentText.equals("droplet") || currentText.equals("droplets")
+                                      || currentText.equals("eau")   || currentText.equals("goutte")|| currentText.equals("gouttes") || currentText.equals("goutte d`eau")) LoadLevel(currentLevel+1);
+        else currentText = "";
+        break;
+      case(7) : 
+        if(currentText.equals("moon") || currentText.equals("moons") || currentText.equals("the moon") || currentText.equals("lune") || currentText.equals("la lune")) LoadLevel(currentLevel+1);
+        else currentText = "";
+        break;
       default : 
         currentText = "";
         break;
@@ -190,7 +203,7 @@ class GameManager {
     String newImagePath;
     if(currentLevel <= levels) {
       newImagePath = "level_" + currentLevel + ".png";
-      //newImagePath = "level_6.png"; // Debug to test new levels
+      //newImagePath = "level_7.png"; // Debug to test new levels
     } else {
       newImagePath = "level_end.png";
     }
